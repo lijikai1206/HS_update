@@ -1,0 +1,12 @@
+romote:
+  plat_path: 'D:\hundsun\software'
+  sql_path: 'D:\Company Works'
+  web_path: 'D:\hundsun'
+
+loacal:
+  rar_path: 'D:\Download'
+
+update_info:
+  - ip: 10.31.116.66
+    fsk_path: '112'
+    dispatch_path: '234'
