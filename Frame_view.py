@@ -1,6 +1,7 @@
 import wx
 import yaml
 import os
+from threading import Thread
 import wx.lib.agw.customtreectrl as CT
 from src.file_sftp import SFTP
 
@@ -26,7 +27,6 @@ class FrameView(wx.Frame):
         self.update_db.Bind(wx.EVT_BUTTON, self.update_db_opration)
 
         self.tx = wx.TextCtrl(self.panel, pos=(280, 40), size=(520, 600), style=wx.TE_MULTILINE)
-
 
     def read_yaml(self):
         yaml_path = './config/config.yaml'
@@ -56,13 +56,13 @@ class FrameView(wx.Frame):
         self.fsk_tree = CT.CustomTreeCtrl(self.panel, -1, pos=(10, 150), size=(260, 320), agwStyle=wx.TR_DEFAULT_STYLE)
         self.root2 = self.fsk_tree.AddRoot("DB_path:/FSK/Scirpt", ct_type=1)
         for unit in fsk_list:
-            self.palt_tree.AppendItem(self.root2, unit, ct_type=1)
+            self.fsk_tree.AppendItem(self.root2, unit, ct_type=1)
         self.fsk_tree.ExpandAll()
 
         self.nc_tree = CT.CustomTreeCtrl(self.panel, -1, pos=(10, 480), size=(260, 150), agwStyle=wx.TR_DEFAULT_STYLE)
         self.root3 = self.nc_tree.AddRoot("WEB_path:/FSK/xxxx", ct_type=1)
         for unit in web_path:
-            self.palt_tree.AppendItem(self.root3, unit, ct_type=1)
+            self.nc_tree.AppendItem(self.root3, unit, ct_type=1)
         self.nc_tree.ExpandAll()
 
         self.tx.AppendText('>>>获取成功，请勾选对应的包下载或升级！\r\n')
@@ -71,10 +71,39 @@ class FrameView(wx.Frame):
         files = self.sf.listdir(path)
         return files
 
+    def get_remote_files_lst(self):
+        db_file_lst = []
+        web_file_lst = []
+        plat_file = self.root1.GetChildren()
+        for t1 in plat_file:
+            if t1.IsChecked():
+                file_path = self.palt_tree.GetItemText(t1)
+                db_file_lst.append(file_path)
+        db_file = self.root2.GetChildren()
+        for t2 in db_file:
+            if t2.IsChecked():
+                file_path = self.fsk_tree.GetItemText(t2)
+                db_file_lst.append(file_path)
+        web_file = self.root3.GetChildren()
+        for t3 in web_file:
+            if t3.IsChecked():
+                file_path = self.nc_tree.GetItemText(t3)
+                web_file_lst.append(file_path)
+        print(db_file_lst)
+        print(web_file_lst)
+        return db_file_lst, web_file_lst
+
+    def down_files(self, file_lst):
+        local = './temp/'
+        for remote in file_lst:
+            self.sf.download(remote, local)
+
     # 绑定升级数据包
     def update_db_opration(self, event):
-        plat_file = self.palt_tree.GetChildren()
-        print(plat_file)
+        db_file_lst, web_file_lst = self.get_remote_files_lst()
+        thread_02 = Thread(target=down_files, args=(*db_file_lst,))
+        thread_02.start()
+        return True
 
 
 if __name__ == '__main__':
