@@ -3,8 +3,8 @@ romote:
   sql_path: 'D:\Company Works'
   web_path: 'D:\hundsun'
 
-loacal:
-  rar_path: 'D:\Download'
+local:
+  rar_path: 'D:\FREM_ZIP'
 
 update_info:
   - ip: 10.31.116.66

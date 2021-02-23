@@ -3,7 +3,11 @@ import yaml
 import os
 from threading import Thread
 import wx.lib.agw.customtreectrl as CT
+
+from src.basic_opration import *
 from src.file_sftp import SFTP
+from src.zipandrar import *
+
 
 class FrameView(wx.Frame):
     def __init__(self):
@@ -32,6 +36,8 @@ class FrameView(wx.Frame):
         yaml_path = './config/config.yaml'
         with open(yaml_path, 'r') as f:
             self.cons = yaml.load(f.read())
+        self.frem_path = self.cons['local']['rar_path']
+        is_dir_exist(self.frem_path)
         host = self.cons['sftp_server']['host']
         port = self.cons['sftp_server']['port']
         username = self.cons['sftp_server']['username']
@@ -89,20 +95,35 @@ class FrameView(wx.Frame):
             if t3.IsChecked():
                 file_path = self.nc_tree.GetItemText(t3)
                 web_file_lst.append(file_path)
-        print(db_file_lst)
-        print(web_file_lst)
+        # print(db_file_lst)
+        # print(web_file_lst)
         return db_file_lst, web_file_lst
 
-    def down_files(self, file_lst):
-        local = './temp/'
-        for remote in file_lst:
-            self.sf.download(remote, local)
+    def down_files(self, file_lst, unzip_lst=None):
+        new_dirs = []
+        if len(file_lst) > 0:
+            for remote in file_lst:
+                self.sf.download(remote, self.zip_path)
+                if unzip_lst is not None and remote in unzip_lst:
+                    filepath, filename = os.path.split(remote)
+                    orgpath = os.path.join(self.zip_path, filename)
+                    tarpath = self.zip_path
+                    after_dir = un_rar(orgpath, tarpath)
+                    new_dirs.append(after_dir)
+        else:
+            self.tx.AppendText(f'>>>没有勾选下载的数据包！\r\n')
+        return new_dirs
 
     # 绑定升级数据包
     def update_db_opration(self, event):
+        ctime = get_curtime('%Y%m%d')
+        self.zip_path = os.path.join(self.frem_path, ctime)
+        is_dir_exist(self.zip_path)
         db_file_lst, web_file_lst = self.get_remote_files_lst()
-        thread_02 = Thread(target=down_files, args=(*db_file_lst,))
+        files_list = db_file_lst + web_file_lst
+        thread_02 = Thread(target=self.down_files, args=(files_list, db_file_lst,))
         thread_02.start()
+        thread_02.join()
         return True
 
 

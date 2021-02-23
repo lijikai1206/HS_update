@@ -9,6 +9,7 @@ reference : http://docs.paramiko.org/en/2.7/api/sftp.html
 import os
 import stat
 import traceback
+
 import paramiko
 
 
@@ -36,9 +37,9 @@ class SFTP(object):
         manager = paramiko.Transport((self.host, self.port))
         manager.connect(username=self.user, password=self.pwd)
         self.manager = manager
-
-        client = paramiko.SFTPClient.from_transport(manager)
-        self.client = client
+        self.__sftp_windows_size = 1073741824
+        self.__sftp_max_package_size = 1073741824
+        self.client = paramiko.SFTPClient.from_transport(manager, self.__sftp_windows_size, self.__sftp_max_package_size)
 
     def quit(self):
         """
